@@ -1,0 +1,17 @@
+name: Vegetable Prices Template
+slug: vegetables_template
+description: Template for vegetable price trends after importing USDA or other non-market data into a parquet price table.
+benchmark: null
+leader: null
+default_prices: data/prices/vegetables_daily.parquet
+default_report_dir: reports/themes/vegetables
+symbols:
+  - TOMATO
+  - POTATO
+  - ONION
+  - LETTUCE
+labels:
+  TOMATO: Tomato imported price series
+  POTATO: Potato imported price series
+  ONION: Onion imported price series
+  LETTUCE: Lettuce imported price series

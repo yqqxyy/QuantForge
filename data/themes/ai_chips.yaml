@@ -1,0 +1,39 @@
+name: AI Chip Theme
+slug: ai_chips
+description: AI accelerator, semiconductor equipment, foundry, memory, and semiconductor ETF trend monitor.
+benchmark: SMH
+leader: NVDA
+default_prices: data/prices/ai_chip_daily.parquet
+default_report_dir: reports/themes/ai_chips
+symbols:
+  - AMD
+  - AMAT
+  - ARM
+  - ASML
+  - AVGO
+  - INTC
+  - KLAC
+  - LRCX
+  - MRVL
+  - MU
+  - NVDA
+  - QCOM
+  - SMH
+  - SOXX
+  - TSM
+labels:
+  AMD: GPU / CPU
+  AMAT: Semiconductor equipment
+  ARM: IP / CPU architecture
+  ASML: Lithography equipment
+  AVGO: AI networking / ASIC
+  INTC: CPU / foundry
+  KLAC: Process control equipment
+  LRCX: Semiconductor equipment
+  MRVL: AI networking / custom silicon
+  MU: Memory
+  NVDA: AI accelerator leader
+  QCOM: Mobile / edge AI chips
+  SMH: Semiconductor ETF
+  SOXX: Semiconductor ETF
+  TSM: Foundry

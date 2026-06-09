@@ -1,0 +1,37 @@
+name: Oil And Geopolitics Theme
+slug: oil_geopolitics
+description: Crude oil, natural gas, energy ETFs, oil majors, and oilfield services trend monitor.
+benchmark: USO
+leader: CL=F
+default_prices: data/prices/oil_geopolitics_daily.parquet
+default_report_dir: reports/themes/oil_geopolitics
+symbols:
+  - CL=F
+  - BZ=F
+  - NG=F
+  - RB=F
+  - USO
+  - BNO
+  - XLE
+  - XOM
+  - CVX
+  - OXY
+  - COP
+  - SLB
+  - HAL
+  - OIH
+labels:
+  CL=F: WTI crude futures
+  BZ=F: Brent crude futures
+  NG=F: Natural gas futures
+  RB=F: Gasoline futures
+  USO: WTI crude oil ETF
+  BNO: Brent crude oil ETF
+  XLE: US energy sector ETF
+  XOM: Integrated oil major
+  CVX: Integrated oil major
+  OXY: Oil producer
+  COP: Oil producer
+  SLB: Oilfield services
+  HAL: Oilfield services
+  OIH: Oil services ETF
