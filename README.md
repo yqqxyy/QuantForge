@@ -1,47 +1,53 @@
 # QuantForge
 
-QuantForge 是一个面向学习和展示的量化研究项目。它把 ETF 轮动、因子研究、walk-forward 样本外验证、市场状态判断、主题趋势观察、AI agent 实验生成和 Streamlit dashboard 放在同一个工作台里。
+QuantForge is a research-oriented quantitative investing workbench. It combines ETF allocation, factor research, walk-forward validation, market regime analysis, theme monitoring, an optional local LLM research agent, and a Streamlit dashboard.
 
-这个项目适合用来学习：
+QuantForge 是一个量化研究工作台，集成了 ETF 配置、因子研究、walk-forward 样本外验证、市场状态分析、主题趋势观察、可选本地 LLM 研究助理，以及 Streamlit 可视化面板。
 
-- 金融市场数据的获取和清洗
-- ETF / 股票 / 期货主题篮子的趋势分析
-- 动量策略、多因子策略、风险控制和参数扫描
-- walk-forward 验证、因子稳定性筛选、因子去相关 / 聚类
-- 用本地大模型做量化研究助理
-- 用 dashboard 和 ngrok 展示研究结果
+> Disclaimer: this project is for research and education only. It is not investment advice.
+>
+> 免责声明：本项目仅用于研究和学习，不构成投资建议。
 
-注意：本项目是研究和学习工具，不构成投资建议。
+## Highlights
 
-## 项目结构
+- Download daily OHLCV data from Yahoo Finance with `yfinance`.
+- Run ETF buy-and-hold benchmarks, momentum rotation, factor research, and walk-forward factor strategies.
+- Add risk overlays such as market filters, volatility targeting, transaction costs, and drawdown diagnostics.
+- Analyze market regimes across equities, bonds, commodities, and sectors.
+- Monitor arbitrary themes such as AI chips, oil/geopolitics, uranium/nuclear, solar, batteries, or cybersecurity.
+- Automatically discover candidate tickers for a theme and generate theme YAML configs.
+- Use an optional local LLM agent to propose experiments and summarize research results.
+- Explore results in a Streamlit dashboard.
+
+## Repository Layout
 
 ```text
 .
 ├── data/
-│   ├── universe_etf.yaml              # 默认 ETF 股票池
-│   ├── universe_ai_chips.yaml         # AI 芯片主题股票池
-│   ├── themes/                        # 通用主题配置
-│   └── prices/                        # 下载后的 parquet 行情数据
-├── reports/                           # 所有策略和分析报告
-├── download_prices.py                 # 下载 yfinance 日线行情
-├── analyze_prices.py                  # 基础收益统计和 buy-and-hold 基准
-├── run_momentum_strategy.py           # ETF 月度动量轮动策略
-├── scan_momentum_params.py            # 动量策略参数扫描
-├── run_factor_research.py             # 因子研究和多因子策略
-├── run_walkforward_factor_strategy.py # walk-forward 因子策略
-├── run_market_regime.py               # 市场状态分析
-├── run_theme_trends.py                # 通用主题趋势观察台
-├── discover_theme_tickers.py          # 根据主题名自动发现 ticker
-├── create_theme_config.py             # 根据 ticker 列表生成主题配置
-├── research_agent.py                  # 本地 Qwen 研究报告 agent
-├── agent_tool_runner.py               # AI 自动提出、运行、比较实验
+│   ├── universe_etf.yaml              # Default ETF universe
+│   ├── universe_ai_chips.yaml         # AI chip theme universe
+│   ├── themes/                        # Generic theme configs
+│   └── prices/                        # Local parquet price files, ignored by git
+├── reports/                           # Generated reports, ignored by git
+├── download_prices.py                 # yfinance downloader
+├── analyze_prices.py                  # Basic buy-and-hold analysis
+├── run_momentum_strategy.py           # Monthly ETF momentum rotation
+├── scan_momentum_params.py            # Momentum parameter scan
+├── run_factor_research.py             # Factor IC and multi-factor research
+├── run_walkforward_factor_strategy.py # Walk-forward IC-weighted factor strategy
+├── run_market_regime.py               # Market regime diagnostics
+├── run_theme_trends.py                # Generic theme trend monitor
+├── discover_theme_tickers.py          # Theme ticker discovery
+├── create_theme_config.py             # Theme YAML generator from known tickers
+├── research_agent.py                  # Optional local LLM research report agent
+├── agent_tool_runner.py               # Optional local LLM experiment runner
 ├── dashboard.py                       # Streamlit dashboard
-└── local_llm.py                       # 本地 Qwen / MLX wrapper
+└── local_llm.py                       # Local LLM wrapper
 ```
 
-## 环境
+## Installation
 
-主要量化代码使用 `quantforge` 环境。当前项目依赖大致包括：
+Create a Python environment:
 
 ```bash
 conda create -n quantforge python=3.11 -y
@@ -49,130 +55,122 @@ conda activate quantforge
 pip install pandas numpy yfinance duckdb pyarrow pyyaml plotly streamlit
 ```
 
-本地 Qwen agent 使用你已有的 `chunqiu` 环境，因为 Qwen/MLX 已经装在那里。
-
-常用执行格式：
+Optional local LLM support currently expects `mlx-lm` and a compatible local model. Install it in the same environment or in a separate environment:
 
 ```bash
-conda run -n quantforge python <script.py>
-conda run -n chunqiu python <agent_script.py>
+pip install mlx-lm
 ```
 
-## 快速开始
+You can configure the default local model and cache path with environment variables:
 
-先下载默认 ETF 数据：
+```bash
+export QUANTFORGE_LLM_MODEL="mlx-community/Qwen3.5-4B-OptiQ-4bit"
+export QUANTFORGE_HF_HOME="$HOME/.cache/huggingface"
+```
+
+If you do not need the LLM agent, you can skip the optional LLM setup.
+
+## Quick Start
+
+Download the default ETF universe:
 
 ```bash
 conda run -n quantforge python download_prices.py
 ```
 
-它会读取：
-
-```text
-data/universe_etf.yaml
-```
-
-并保存到：
-
-```text
-data/prices/etf_daily.parquet
-```
-
-然后跑市场状态分析和当前主策略：
+Run market regime analysis:
 
 ```bash
 conda run -n quantforge python run_market_regime.py
-conda run -n quantforge python run_walkforward_factor_strategy.py --decorrelate-factors --report-dir reports/walkforward_factor_clustered_loose
 ```
 
-启动 dashboard：
+Run the main walk-forward factor strategy:
 
 ```bash
-conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
+conda run -n quantforge python run_walkforward_factor_strategy.py \
+  --decorrelate-factors \
+  --report-dir reports/walkforward_factor_clustered_loose
 ```
 
-浏览器打开：
+Start the dashboard:
+
+```bash
+conda run -n quantforge streamlit run dashboard.py \
+  --server.port 8501 \
+  --server.address 127.0.0.1 \
+  --server.headless true \
+  --browser.gatherUsageStats false
+```
+
+Open:
 
 ```text
 http://127.0.0.1:8501
 ```
 
-关闭 dashboard：
+Stop a running dashboard:
 
 ```bash
 lsof -i :8501
 kill <PID>
 ```
 
-## 数据下载
+## Data
 
-下载默认 ETF 股票池：
+The default downloader reads a YAML universe and writes a parquet file.
+
+Default ETF data:
 
 ```bash
 conda run -n quantforge python download_prices.py
 ```
 
-只下载指定 ticker：
+Specific symbols:
 
 ```bash
 conda run -n quantforge python download_prices.py --symbols SPY QQQ GLD
 ```
 
-下载某个主题配置里的 ticker：
+Theme-specific data:
 
 ```bash
-conda run -n quantforge python download_prices.py --universe data/themes/oil_geopolitics.yaml --start 2024-01-01 --output data/prices/oil_geopolitics_daily.parquet
+conda run -n quantforge python download_prices.py \
+  --universe data/themes/oil_geopolitics.yaml \
+  --start 2024-01-01 \
+  --output data/prices/oil_geopolitics_daily.parquet
 ```
 
-检查数据最新日期：
+Check the latest date:
 
 ```bash
 conda run -n quantforge python -c "import pandas as pd; df=pd.read_parquet('data/prices/etf_daily.parquet'); print(df['date'].max()); print(df['symbol'].nunique(), len(df))"
 ```
 
-说明：
+Notes:
 
-- 默认数据源是 Yahoo Finance，通过 `yfinance` 获取。
-- 股票、ETF、部分期货可以直接下载。
-- 蔬菜价格、房租、电价等非金融 ticker 需要先接入外部数据源，再转换成统一 parquet 格式。
+- Yahoo Finance data is accessed through `yfinance`.
+- Stocks, ETFs, and many futures symbols are supported.
+- Non-market data such as vegetable prices, rents, electricity prices, or shipping rates should first be imported into the same parquet schema.
 
-## 基础分析
+## Strategies And Research Modules
 
-基础 buy-and-hold 和等权组合分析：
+### Buy-And-Hold Baselines
 
 ```bash
 conda run -n quantforge python analyze_prices.py
 ```
 
-输出：
+Outputs include data quality checks, daily returns, cumulative wealth, and performance metrics.
 
-```text
-reports/data_quality.csv
-reports/performance_summary.csv
-reports/daily_returns.csv
-reports/cumulative_wealth.csv
-reports/equity_curves.html
-```
+### Momentum Rotation
 
-## 动量轮动策略
-
-脚本：
-
-```text
-run_momentum_strategy.py
-```
-
-核心逻辑：
-
-> 每个月看过去一段时间表现最好的 ETF，买入排名靠前的若干个。
-
-默认运行：
+Monthly ETF rotation based on trailing momentum:
 
 ```bash
 conda run -n quantforge python run_momentum_strategy.py
 ```
 
-示例：252 日动量、持有前 3 名、加入 SPY 市场过滤和 12% 波动率目标：
+Example with a market filter and volatility target:
 
 ```bash
 conda run -n quantforge python run_momentum_strategy.py \
@@ -183,59 +181,21 @@ conda run -n quantforge python run_momentum_strategy.py \
   --report-dir reports/momentum_rotation_risk_control
 ```
 
-常用参数：
-
-- `--lookback-days`：动量观察窗口
-- `--top-k`：每次持有前几名
-- `--market-filter-symbol SPY`：SPY 跌破均线时降低风险
-- `--target-volatility`：目标波动率控制
-- `--transaction-cost-bps`：交易成本
-
-## 参数扫描
-
-脚本：
-
-```text
-scan_momentum_params.py
-```
-
-运行：
+### Parameter Scan
 
 ```bash
 conda run -n quantforge python scan_momentum_params.py
 ```
 
-它会扫描：
+This scans momentum lookbacks, portfolio sizes, market filters, and volatility targets.
 
-- 不同动量窗口
-- 不同持仓数量
-- 是否加市场过滤
-- 是否加波动率目标
-
-输出：
-
-```text
-reports/parameter_scan/momentum_scan_results.csv
-reports/parameter_scan/best_by_sharpe.csv
-reports/parameter_scan/best_by_calmar.csv
-reports/parameter_scan/risk_return_scatter.html
-```
-
-## 因子研究
-
-脚本：
-
-```text
-run_factor_research.py
-```
-
-运行：
+### Factor Research
 
 ```bash
 conda run -n quantforge python run_factor_research.py
 ```
 
-当前因子包括：
+Current factors include:
 
 - `momentum_63`
 - `momentum_126`
@@ -246,33 +206,9 @@ conda run -n quantforge python run_factor_research.py
 - `downside_volatility_63`
 - `max_drawdown_126`
 
-它会计算：
+The module computes IC, rank IC, quantile returns, factor correlations, fixed-prior multi-factor scores, and IC-weighted scores.
 
-- IC / Rank IC
-- 分位数组合收益
-- 因子相关性
-- 固定先验多因子策略
-- IC-weighted 多因子策略
-
-输出目录：
-
-```text
-reports/factor_research/
-```
-
-## Walk-Forward 因子策略
-
-脚本：
-
-```text
-run_walkforward_factor_strategy.py
-```
-
-这是目前项目里最接近真实量化研究流程的策略。它模拟：
-
-> 用过去训练/筛选因子，用未来样本外验证策略。
-
-推荐运行：
+### Walk-Forward Factor Strategy
 
 ```bash
 conda run -n quantforge python run_walkforward_factor_strategy.py \
@@ -280,17 +216,17 @@ conda run -n quantforge python run_walkforward_factor_strategy.py \
   --report-dir reports/walkforward_factor_clustered_loose
 ```
 
-它支持：
+Features:
 
-- rolling IC 估计
-- 因子稳定性筛选
-- 因子去相关 / 因子聚类
-- 每个相关因子簇保留代表因子
-- SPY 市场过滤
-- 目标波动率控制
-- 交易成本
+- Rolling IC estimation
+- Factor stability filtering
+- Factor decorrelation / clustering
+- Cluster representative selection
+- Market filter support
+- Volatility targeting
+- Transaction cost modeling
 
-常用参数：
+Useful options:
 
 ```bash
 --forward-days 63
@@ -307,62 +243,33 @@ conda run -n quantforge python run_walkforward_factor_strategy.py \
 --target-volatility 0.12
 ```
 
-## 市场状态分析
-
-脚本：
-
-```text
-run_market_regime.py
-```
-
-运行：
+## Market Regime Analysis
 
 ```bash
 conda run -n quantforge python run_market_regime.py
 ```
 
-它判断当前市场：
+The module classifies the current market as:
 
 - `risk_on`
 - `mixed`
 - `risk_off`
 
-并分析：
+It evaluates equity momentum, SPY versus its 200-day moving average, equities versus Treasuries, growth versus broad equity, small caps versus large caps, gold versus equities, cyclical sectors versus defensive sectors, volatility, drawdown, and relative strength.
 
-- SPY 是否在 200 日均线上方
-- 股票 vs 长债
-- 科技 vs 大盘
-- 小盘 vs 大盘
-- 黄金 vs 股票
-- 周期板块 vs 防御板块
-- 各 ETF 的相对强弱、波动率、回撤
-
-输出：
+Results are written to:
 
 ```text
 reports/market_regime/
 ```
 
-dashboard 里的 `Market` tab 会读取这些结果。
+The dashboard reads these outputs in the `Market` tab.
 
-## 主题观察台
+## Theme Monitor
 
-通用脚本：
+The generic theme monitor analyzes a configurable basket of stocks, ETFs, or futures.
 
-```text
-run_theme_trends.py
-```
-
-它适合观察一个主题篮子，比如：
-
-- AI 芯片
-- 原油 / 地缘政治
-- 核电 / 铀矿
-- 网络安全
-- 太阳能
-- 电池 / 锂矿
-
-已经有的主题配置：
+Built-in example configs:
 
 ```text
 data/themes/ai_chips.yaml
@@ -370,31 +277,39 @@ data/themes/oil_geopolitics.yaml
 data/themes/vegetables_template.yaml
 ```
 
-运行 AI 芯片主题：
+Run AI chip analysis:
 
 ```bash
-conda run -n quantforge python download_prices.py --universe data/themes/ai_chips.yaml --start 2024-01-01 --output data/prices/ai_chip_daily.parquet
+conda run -n quantforge python download_prices.py \
+  --universe data/themes/ai_chips.yaml \
+  --start 2024-01-01 \
+  --output data/prices/ai_chip_daily.parquet
+
 conda run -n quantforge python run_theme_trends.py --theme data/themes/ai_chips.yaml
 ```
 
-运行原油主题：
+Run oil/geopolitics analysis:
 
 ```bash
-conda run -n quantforge python download_prices.py --universe data/themes/oil_geopolitics.yaml --start 2024-01-01 --output data/prices/oil_geopolitics_daily.parquet
+conda run -n quantforge python download_prices.py \
+  --universe data/themes/oil_geopolitics.yaml \
+  --start 2024-01-01 \
+  --output data/prices/oil_geopolitics_daily.parquet
+
 conda run -n quantforge python run_theme_trends.py --theme data/themes/oil_geopolitics.yaml
 ```
 
-输出：
+Theme reports are written to:
 
 ```text
 reports/themes/<slug>/
 ```
 
-dashboard 里的 `Themes` tab 会自动列出这些主题报告。
+The dashboard reads them in the `Themes` tab.
 
-## 自动生成主题配置
+## Theme Config Generation
 
-如果你已经知道 ticker 列表，用：
+If you already know the ticker list:
 
 ```bash
 conda run -n quantforge python create_theme_config.py \
@@ -405,20 +320,15 @@ conda run -n quantforge python create_theme_config.py \
   --description "Uranium miners, nuclear energy ETFs, and nuclear infrastructure stocks."
 ```
 
-如果你只知道主题名，让系统自动找 ticker，用：
+If you only know the theme name, let the discovery tool propose candidates:
 
 ```bash
 conda run -n quantforge python discover_theme_tickers.py --theme-name "AI chip"
-```
-
-或者：
-
-```bash
 conda run -n quantforge python discover_theme_tickers.py --theme-name "uranium nuclear"
 conda run -n quantforge python discover_theme_tickers.py --theme-name "oil geopolitics"
 ```
 
-它会生成：
+Outputs:
 
 ```text
 data/themes/<slug>.yaml
@@ -426,66 +336,47 @@ reports/theme_discovery/<slug>/candidates.csv
 reports/theme_discovery/<slug>/selected.csv
 ```
 
-然后继续跑它打印出的两条命令：
+Then run the printed download and analysis commands.
+
+Useful options:
+
+- `--seed-symbols`: force include specific tickers.
+- `--queries`: add extra search queries.
+- `--max-symbols`: control basket size.
+- `--benchmark`: override the theme benchmark.
+- `--leader`: override the theme leader.
+
+Ticker discovery is heuristic. Always review the generated universe before using it for research.
+
+## Optional AI Agent
+
+QuantForge includes two optional local LLM entry points:
 
 ```bash
-conda run -n quantforge python download_prices.py --universe data/themes/<slug>.yaml --start 2024-01-01 --output data/prices/<slug>_daily.parquet
-conda run -n quantforge python run_theme_trends.py --theme data/themes/<slug>.yaml
+conda run -n quantforge python research_agent.py --max-tokens 1800
+conda run -n quantforge python agent_tool_runner.py
 ```
 
-说明：
+If your LLM dependencies live in a separate environment, run those scripts from that environment instead.
 
-- 自动发现依赖 Yahoo Finance 搜索和内置主题提示词。
-- 结果应人工检查，尤其是小众主题。
-- 可以用 `--seed-symbols` 强制加入你关心的 ticker。
-- 可以用 `--queries` 加额外搜索词。
-- 可以用 `--max-symbols` 控制候选数量。
-
-## AI Agent
-
-本地 LLM 配置在：
-
-```text
-local_llm.py
-```
-
-默认使用：
-
-```text
-mlx-community/Qwen3.5-4B-OptiQ-4bit
-/Users/qqxyyy/DeepLearning/chunqiu/run/hf_cache
-```
-
-研究报告 agent：
+Common modes:
 
 ```bash
-conda run -n chunqiu python research_agent.py --max-tokens 1800
+conda run -n quantforge python agent_tool_runner.py --plan-only
+conda run -n quantforge python agent_tool_runner.py --use-fallback-plan --max-experiments 1
+conda run -n quantforge python agent_tool_runner.py --skip-recap
 ```
 
-自动实验 agent：
+The agent can:
 
-```bash
-conda run -n chunqiu python agent_tool_runner.py
-```
+- Read baseline strategy reports.
+- Propose new experiment parameters.
+- Validate parameters against a whitelist.
+- Run walk-forward strategy experiments.
+- Compare results with the baseline.
+- Generate experiment summaries.
 
-常用模式：
-
-```bash
-conda run -n chunqiu python agent_tool_runner.py --plan-only
-conda run -n chunqiu python agent_tool_runner.py --use-fallback-plan --max-experiments 1
-conda run -n chunqiu python agent_tool_runner.py --skip-recap
-```
-
-AI agent 会：
-
-- 读取 baseline 策略报告
-- 提出实验参数
-- 校验参数是否安全
-- 调用 walk-forward 策略脚本
-- 对比实验和 baseline
-- 生成总结报告
-
-输出：
+Outputs:
 
 ```text
 reports/agent_experiments/
@@ -494,74 +385,63 @@ reports/agent_tool_runs/
 
 ## Dashboard
 
-启动：
+Start:
 
 ```bash
-conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
+conda run -n quantforge streamlit run dashboard.py \
+  --server.port 8501 \
+  --server.address 127.0.0.1 \
+  --server.headless true \
+  --browser.gatherUsageStats false
 ```
 
-访问：
+Open:
 
 ```text
 http://127.0.0.1:8501
 ```
 
-当前页面：
+Tabs:
 
-- `Market`：市场状态分析
-- `AI Chips`：AI 芯片主题观察
-- `Themes`：通用主题观察台
-- `Overview`：策略指标总览
-- `Strategy`：净值、持仓、权重
-- `Factors`：因子筛选、因子聚类、rolling IC
-- `Experiments`：AI agent 自动实验结果
-- `Agent Reports`：AI 研究报告
+- `Market`: market regime diagnostics
+- `AI Chips`: AI chip theme monitor
+- `Themes`: generic theme reports
+- `Overview`: selected strategy performance
+- `Strategy`: equity curves, holdings, and weights
+- `Factors`: factor selection, clusters, and rolling IC
+- `Experiments`: AI experiment logs
+- `Agent Reports`: standalone agent reports
 
-关闭：
+## Public Sharing With Ngrok
 
-```bash
-lsof -i :8501
-kill <PID>
-```
-
-## 公网分享
-
-如果想把本地 dashboard 发给朋友，可以用 ngrok。
-
-先启动 dashboard：
-
-```bash
-conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
-```
-
-再启动 ngrok：
+Start the dashboard first, then expose it:
 
 ```bash
 ngrok http http://127.0.0.1:8501
 ```
 
-查看 ngrok 生成的网址：
+Inspect the generated public URL:
 
 ```bash
 curl http://127.0.0.1:4040/api/tunnels
 ```
 
-关闭公网分享：
+Stop ngrok:
 
 ```bash
 lsof -i :4040
 kill <PID>
 ```
 
-注意：
+Security notes:
 
-- ngrok 免费 URL 通常是临时的，重启后会变。
-- 页面没有登录保护，不要展示 token、账户、持仓等敏感信息。
-- Streamlit 本身已经是网页服务，通常不需要 Daphne。
+- Free ngrok URLs are usually temporary.
+- The dashboard has no built-in authentication.
+- Do not expose secrets, account data, tokens, or private holdings.
 
-## 常用完整流程
+## Common Workflows
 
-### ETF 策略研究
+ETF strategy research:
 
 ```bash
 conda run -n quantforge python download_prices.py
@@ -570,7 +450,7 @@ conda run -n quantforge python run_walkforward_factor_strategy.py --decorrelate-
 conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
 ```
 
-### 主题研究
+Theme research:
 
 ```bash
 conda run -n quantforge python discover_theme_tickers.py --theme-name "uranium nuclear"
@@ -579,36 +459,257 @@ conda run -n quantforge python run_theme_trends.py --theme data/themes/uranium_n
 conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
 ```
 
-### AI 自动实验
+AI-assisted experiment loop:
 
 ```bash
 conda run -n quantforge python run_walkforward_factor_strategy.py --decorrelate-factors --report-dir reports/walkforward_factor_clustered_loose
-conda run -n chunqiu python agent_tool_runner.py
+conda run -n quantforge python agent_tool_runner.py
 conda run -n quantforge streamlit run dashboard.py --server.port 8501 --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
 ```
 
-## 报告文件
+## Generated Report Files
 
-常见输出类型：
+Common outputs:
 
-- `performance_summary.csv`：收益、波动、Sharpe、回撤
-- `risk_summary.csv`：风险控制统计
-- `turnover_summary.csv`：换手率和交易成本
-- `holdings.csv`：再平衡持仓
-- `daily_weights.csv`：每日权重
-- `cumulative_wealth.csv`：累计净值
-- `*.html`：Plotly 图表
-- `*_summary.md`：文字总结
+- `performance_summary.csv`
+- `risk_summary.csv`
+- `turnover_summary.csv`
+- `holdings.csv`
+- `daily_weights.csv`
+- `cumulative_wealth.csv`
+- `*.html` Plotly charts
+- `*_summary.md` readable summaries
 
-这些报告都在 `reports/` 下，dashboard 会自动读取其中一部分。
+Generated reports and local price data are ignored by git.
 
-## 下一步可以扩展什么
+## Roadmap Ideas
 
-- 机器学习横截面 ranking 策略
-- 股票基本面数据
-- 新闻 / 财报 / 宏观事件数据
-- USDA 等非金融数据源接入
-- 主题观察台的 LLM 自动选股增强
-- 更严格的组合风险模型
-- 交易成本、滑点、流动性约束
-- 部署到云端并加登录保护
+- ML-based cross-sectional ranking strategies
+- Fundamental data integration
+- News, filings, and macro event features
+- Non-market data adapters, such as USDA market data
+- LLM-assisted theme discovery with citations
+- More robust portfolio risk models
+- Transaction cost, slippage, and liquidity constraints
+- Authenticated deployment for sharing dashboards
+
+---
+
+# 中文说明
+
+QuantForge 是一个面向学习、研究和展示的量化投资工作台。它包含 ETF 轮动、因子研究、walk-forward 样本外验证、市场状态分析、主题趋势观察、可选本地 LLM agent 和 Streamlit dashboard。
+
+本项目仅用于研究和学习，不构成投资建议。
+
+## 功能概览
+
+- 使用 `yfinance` 下载股票、ETF、期货日线数据。
+- 支持 buy-and-hold 基准、动量轮动、多因子研究、walk-forward 因子策略。
+- 支持市场过滤、波动率目标、交易成本和回撤分析。
+- 支持跨资产市场状态判断。
+- 支持 AI 芯片、原油/地缘政治、核电/铀矿等主题趋势观察。
+- 可以根据主题名自动发现候选 ticker 并生成主题配置。
+- 可选使用本地 LLM 生成研究报告和自动实验计划。
+- 使用 Streamlit dashboard 查看结果。
+
+## 安装
+
+```bash
+conda create -n quantforge python=3.11 -y
+conda activate quantforge
+pip install pandas numpy yfinance duckdb pyarrow pyyaml plotly streamlit
+```
+
+如果需要本地 LLM agent，可以额外安装：
+
+```bash
+pip install mlx-lm
+```
+
+本地 LLM 可通过环境变量配置：
+
+```bash
+export QUANTFORGE_LLM_MODEL="mlx-community/Qwen3.5-4B-OptiQ-4bit"
+export QUANTFORGE_HF_HOME="$HOME/.cache/huggingface"
+```
+
+不使用 AI agent 时可以跳过这一步。
+
+## 快速开始
+
+下载默认 ETF 数据：
+
+```bash
+conda run -n quantforge python download_prices.py
+```
+
+运行市场状态分析：
+
+```bash
+conda run -n quantforge python run_market_regime.py
+```
+
+运行主策略：
+
+```bash
+conda run -n quantforge python run_walkforward_factor_strategy.py \
+  --decorrelate-factors \
+  --report-dir reports/walkforward_factor_clustered_loose
+```
+
+启动 dashboard：
+
+```bash
+conda run -n quantforge streamlit run dashboard.py \
+  --server.port 8501 \
+  --server.address 127.0.0.1 \
+  --server.headless true \
+  --browser.gatherUsageStats false
+```
+
+打开：
+
+```text
+http://127.0.0.1:8501
+```
+
+关闭：
+
+```bash
+lsof -i :8501
+kill <PID>
+```
+
+## 常用模块
+
+基础分析：
+
+```bash
+conda run -n quantforge python analyze_prices.py
+```
+
+动量轮动：
+
+```bash
+conda run -n quantforge python run_momentum_strategy.py
+```
+
+参数扫描：
+
+```bash
+conda run -n quantforge python scan_momentum_params.py
+```
+
+因子研究：
+
+```bash
+conda run -n quantforge python run_factor_research.py
+```
+
+Walk-forward 因子策略：
+
+```bash
+conda run -n quantforge python run_walkforward_factor_strategy.py --decorrelate-factors --report-dir reports/walkforward_factor_clustered_loose
+```
+
+市场状态分析：
+
+```bash
+conda run -n quantforge python run_market_regime.py
+```
+
+## 主题观察台
+
+如果已经有主题配置：
+
+```bash
+conda run -n quantforge python download_prices.py \
+  --universe data/themes/ai_chips.yaml \
+  --start 2024-01-01 \
+  --output data/prices/ai_chip_daily.parquet
+
+conda run -n quantforge python run_theme_trends.py --theme data/themes/ai_chips.yaml
+```
+
+如果只知道主题名，可以自动发现 ticker：
+
+```bash
+conda run -n quantforge python discover_theme_tickers.py --theme-name "AI chip"
+conda run -n quantforge python discover_theme_tickers.py --theme-name "uranium nuclear"
+conda run -n quantforge python discover_theme_tickers.py --theme-name "oil geopolitics"
+```
+
+自动发现会生成：
+
+```text
+data/themes/<slug>.yaml
+reports/theme_discovery/<slug>/candidates.csv
+reports/theme_discovery/<slug>/selected.csv
+```
+
+自动发现是启发式工具，生成的 ticker 列表需要人工检查。
+
+## 可选 AI Agent
+
+研究报告 agent：
+
+```bash
+conda run -n quantforge python research_agent.py --max-tokens 1800
+```
+
+自动实验 agent：
+
+```bash
+conda run -n quantforge python agent_tool_runner.py
+```
+
+如果 LLM 依赖安装在单独环境中，可以用对应环境运行这两个脚本。
+
+## Dashboard 页面
+
+- `Market`：市场状态分析
+- `AI Chips`：AI 芯片主题
+- `Themes`：通用主题观察台
+- `Overview`：策略指标总览
+- `Strategy`：净值、持仓和权重
+- `Factors`：因子筛选、聚类和 rolling IC
+- `Experiments`：AI agent 实验记录
+- `Agent Reports`：AI 研究报告
+
+## Ngrok 公网分享
+
+先启动 dashboard，然后：
+
+```bash
+ngrok http http://127.0.0.1:8501
+```
+
+查看公网 URL：
+
+```bash
+curl http://127.0.0.1:4040/api/tunnels
+```
+
+关闭 ngrok：
+
+```bash
+lsof -i :4040
+kill <PID>
+```
+
+注意：dashboard 没有内置登录保护，不要公开敏感数据。
+
+## 输出文件
+
+常见报告：
+
+- `performance_summary.csv`
+- `risk_summary.csv`
+- `turnover_summary.csv`
+- `holdings.csv`
+- `daily_weights.csv`
+- `cumulative_wealth.csv`
+- `*.html` 图表
+- `*_summary.md` 文字总结
+
+`reports/` 和本地行情数据默认被 `.gitignore` 忽略。

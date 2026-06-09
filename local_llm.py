@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 
 
-DEFAULT_MODEL = "mlx-community/Qwen3.5-4B-OptiQ-4bit"
-DEFAULT_HF_HOME = Path("/Users/qqxyyy/DeepLearning/chunqiu/run/hf_cache")
+DEFAULT_MODEL = os.environ.get("QUANTFORGE_LLM_MODEL", "mlx-community/Qwen3.5-4B-OptiQ-4bit")
+DEFAULT_HF_HOME = Path(os.environ.get("QUANTFORGE_HF_HOME", Path.home() / ".cache" / "huggingface"))
 
 
 @dataclass(frozen=True)

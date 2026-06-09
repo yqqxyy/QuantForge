@@ -1,4 +1,4 @@
-# conda run -n chunqiu python research_agent.py --max-tokens 1800
+# conda run -n quantforge python research_agent.py --max-tokens 1800
 from __future__ import annotations
 
 import argparse
